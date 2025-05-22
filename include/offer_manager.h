@@ -11,15 +11,12 @@ public:
   int duration;
 
   Offer(std::string name, int price, int duration);
+
+  static Offer deserialize(const std::vector<std::string> &values);
+  static std::vector<std::string> serialize(const Offer &entry);
 };
 
-class OfferBuilder : private CsvEntryBuilder<Offer> {
-public:
-  Offer deserialize(const std::vector<std::string> &values) const;
-  std::vector<std::string> serialize(const Offer &entry) const;
-};
-
-class OfferManager : public CsvFile<Offer, OfferBuilder> {
+class OfferManager : public CsvFile<Offer> {
 public:
   OfferManager();
 };

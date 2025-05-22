@@ -8,21 +8,20 @@
 #include <string_view>
 #include <vector>
 
-template <class T, class U>
-concept Derived = std::is_base_of<U, T>::value;
+// template <class T, class U>
+// concept Derived = std::is_base_of<U, T>::value;
 
-template <typename T> class CsvEntryBuilder {
-public:
-  T deserialize(const std::vector<std::string> &values) const;
-  std::vector<std::string> serialize(const T &entry) const;
-};
+// template <typename T> class CsvEntryBuilder {
+// public:
+//   T deserialize(const std::vector<std::string> &values) const;
+//   std::vector<std::string> serialize(const T &entry) const;
+// };
 
-template <typename T, Derived<CsvEntryBuilder<T>> U> class CsvFile {
+template <typename T> class CsvFile {
 private:
   std::string path;
   std::vector<T> entries;
 
-  U builder;
   bool modified = false;
 
 public:
@@ -45,13 +44,11 @@ public:
         values.push_back(std::string(value.begin(), value.end()));
       }
 
-      T entry = builder.deserialize(values);
-
-      entries.push_back(entry);
+      entries.push_back(T::deserialize(values));
     }
   };
 
-  ~CsvFile() {
+  ~CsvFile() noexcept(false) {
     if (modified) {
       std::ofstream file(path);
       if (!file.is_open()) {
@@ -59,14 +56,14 @@ public:
       }
 
       for (const auto &entry : entries) {
-        auto values = builder.serialize(entry);
+        auto values = T::serialize(entry);
         for (size_t i = 0; i < values.size(); ++i) {
           file << values[i];
           if (i != values.size() - 1) {
-            file << ",";
+            file << ',';
           }
         }
-        file << "\n";
+        file << '\n';
       }
 
       file.close();
@@ -80,11 +77,15 @@ public:
     modified = true;
   }
 
-  void removeEntry(std::function<bool(const T &)> predicate) {
+  bool removeEntry(std::function<bool(const T &)> predicate) {
     auto it = std::remove_if(entries.begin(), entries.end(), predicate);
     if (it != entries.end()) {
       entries.erase(it, entries.end());
       modified = true;
+
+      return true;
     }
+
+    return false;
   }
 };

@@ -13,10 +13,14 @@ int DeleteOfferCommand::execute(std::vector<std::string> args) {
   std::string name = args[0];
 
   OfferManager offer_manager;
-  offer_manager.removeEntry(
+  auto removed_entry = offer_manager.removeEntry(
       [name](const Offer &offer) { return offer.name == name; });
 
-  std::cout << "Offer deleted: " << name << std::endl;
+  if (removed_entry) {
+    std::cout << "Offer deleted: " << name << std::endl;
+  } else {
+    std::cerr << "No offer found with name: " << name << std::endl;
+  }
 
   return 0;
 }

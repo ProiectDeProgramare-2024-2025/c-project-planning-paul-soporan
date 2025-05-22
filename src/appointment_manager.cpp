@@ -7,8 +7,27 @@ Appointment::Appointment(std::string client_name, std::string offer_name,
     : client_name{client_name}, offer_name{offer_name}, date{date}, time{time} {
 }
 
-std::vector<std::string>
-AppointmentBuilder::serialize(const Appointment &entry) const {
+std::chrono::year_month_day
+Appointment::parseDate(const std::string &date_str) {
+  std::istringstream is(date_str);
+  std::chrono::year_month_day date;
+
+  is >> std::chrono::parse("%d/%m/%Y", date);
+
+  return date;
+}
+
+std::chrono::hh_mm_ss<std::chrono::minutes>
+Appointment::parseTime(const std::string &time_str) {
+  std::istringstream is(time_str);
+  std::chrono::minutes minutes;
+
+  is >> std::chrono::parse("%H:%M", minutes);
+
+  return std::chrono::hh_mm_ss<std::chrono::minutes>(minutes);
+}
+
+std::vector<std::string> Appointment::serialize(const Appointment &entry) {
   std::vector<std::string> values;
   values.push_back(entry.client_name);
   values.push_back(entry.offer_name);
@@ -20,23 +39,13 @@ AppointmentBuilder::serialize(const Appointment &entry) const {
   return values;
 }
 
-Appointment
-AppointmentBuilder::deserialize(const std::vector<std::string> &values) const {
+Appointment Appointment::deserialize(const std::vector<std::string> &values) {
   if (values.size() != 4) {
     throw std::invalid_argument("Expected 4 values for Appointment");
   }
 
-  std::istringstream is(values[2]);
-
-  std::chrono::year_month_day date;
-  is >> std::chrono::parse("%d/%m/%Y", date);
-
-  std::chrono::minutes minutes;
-  is >> std::chrono::parse("%H:%M", minutes);
-
-  return Appointment(values[0], values[1], date,
-                     std::chrono::hh_mm_ss<std::chrono::minutes>(minutes));
+  return Appointment(values[0], values[1], parseDate(values[2]),
+                     parseTime(values[3]));
 }
 
-AppointmentManager::AppointmentManager()
-    : CsvFile<Appointment, AppointmentBuilder>("./data/appointments.csv") {}
+AppointmentManager::AppointmentManager() : CsvFile("./data/appointments.csv") {}

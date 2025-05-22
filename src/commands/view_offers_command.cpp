@@ -4,7 +4,7 @@
 
 ViewOffersCommand::ViewOffersCommand() : Command({"view_offers"}) {}
 
-int ViewOffersCommand::execute(std::vector<std::string> args) {
+int ViewOffersCommand::execute(std::vector<std::string>) {
   OfferManager offer_manager;
   const auto &offers = offer_manager.getEntries();
 

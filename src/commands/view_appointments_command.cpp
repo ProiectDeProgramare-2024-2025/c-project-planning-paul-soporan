@@ -5,7 +5,7 @@
 ViewAppointmentsCommand::ViewAppointmentsCommand()
     : Command({"view_appointments"}) {}
 
-int ViewAppointmentsCommand::execute(std::vector<std::string> args) {
+int ViewAppointmentsCommand::execute(std::vector<std::string>) {
   AppointmentManager appointment_manager;
   const auto &appointments = appointment_manager.getEntries();
 

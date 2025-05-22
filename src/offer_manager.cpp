@@ -4,7 +4,7 @@
 Offer::Offer(std::string name, int price, int duration)
     : name{name}, price{price}, duration{duration} {}
 
-std::vector<std::string> OfferBuilder::serialize(const Offer &entry) const {
+std::vector<std::string> Offer::serialize(const Offer &entry) {
   std::vector<std::string> values;
   values.push_back(entry.name);
   values.push_back(std::to_string(entry.price));
@@ -13,7 +13,7 @@ std::vector<std::string> OfferBuilder::serialize(const Offer &entry) const {
   return values;
 }
 
-Offer OfferBuilder::deserialize(const std::vector<std::string> &values) const {
+Offer Offer::deserialize(const std::vector<std::string> &values) {
   if (values.size() != 3) {
     throw std::invalid_argument("Expected 3 values for Offer");
   }
