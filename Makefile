@@ -11,7 +11,7 @@ OBJ := $(OBJ:.cpp=.o)
 OBJ := $(OBJ:.cc=.o)
 
 # Output binary
-TARGET = dental_appointment_system
+TARGET = dental_office_appointment_system
 
 # Default target
 all: $(TARGET)
