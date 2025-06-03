@@ -2,25 +2,23 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++23 -Iinclude
 
-# Find all source files recursively
-SRC = $(shell find src -type f \( -name "*.cpp" -o -name "*.cc" \))
+# === Core (shared) source files — excluding executables
+CORE_SRC = $(shell find src -type f \( -name "*.cpp" -o -name "*.cc" \) ! -path "src/executables/*")
+CORE_OBJ = $(patsubst src/%, build/%, $(CORE_SRC))
+CORE_OBJ := $(CORE_OBJ:.cpp=.o)
+CORE_OBJ := $(CORE_OBJ:.cc=.o)
 
-# Replace src/ with build/ and change extensions to .o
-OBJ = $(patsubst src/%, build/%, $(SRC))
-OBJ := $(OBJ:.cpp=.o)
-OBJ := $(OBJ:.cc=.o)
+# === Executables: source files in executables/
+EXEC_SRC = $(shell find src/executables -maxdepth 1 -type f \( -name "*.cpp" -o -name "*.cc" \))
+EXEC_NAMES = $(notdir $(EXEC_SRC))
+EXEC_NAMES := $(EXEC_NAMES:.cpp=)
+EXEC_NAMES := $(EXEC_NAMES:.cc=)
+EXECUTABLES = $(addprefix bin/, $(EXEC_NAMES))
 
-# Output binary
-TARGET = dental_office_appointment_system
+# === Default target
+all: $(EXECUTABLES)
 
-# Default target
-all: $(TARGET)
-
-# Link all object files
-$(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^
-
-# Rule to compile .cpp and .cc to .o inside build/
+# === Rule: compile core files to .o in build/
 build/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -29,8 +27,17 @@ build/%.o: src/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean target
+# === Rule: link each executable with core object files
+bin/%: src/executables/%.cpp $(CORE_OBJ)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+bin/%: src/executables/%.cc $(CORE_OBJ)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+# === Clean
 clean:
-	rm -rf build $(TARGET)
+	rm -rf build bin
 
 .PHONY: all clean
