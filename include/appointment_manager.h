@@ -39,4 +39,7 @@ public:
   std::vector<AppointmentSlot>
   getAvailableSlots(const std::chrono::year_month_day &date,
                     const OfferManager &offer_manager) const;
+  bool canScheduleOffer(const std::chrono::year_month_day &date,
+                        const std::chrono::minutes &time, const Offer &offer,
+                        const OfferManager &offer_manager) const;
 };

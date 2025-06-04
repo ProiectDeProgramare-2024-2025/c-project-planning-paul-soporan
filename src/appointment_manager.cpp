@@ -34,9 +34,11 @@ std::vector<std::string> Appointment::serialize(const Appointment &entry) {
   std::vector<std::string> values;
   values.push_back(entry.client_name);
   values.push_back(entry.offer_name);
-  values.push_back(std::format("{:2}/{:2}/{:4}", entry.date.day(),
-                               entry.date.month(), entry.date.year()));
-  values.push_back(std::format("{:2}:{:2}", time.hours(), time.minutes()));
+  values.push_back(
+      std::format("{:0>2}/{:0>2}/{:0>4}", (unsigned)entry.date.day(),
+                  (unsigned)entry.date.month(), (int)entry.date.year()));
+  values.push_back(std::format("{:0>2}:{:0>2}", time.hours().count(),
+                               time.minutes().count()));
 
   return values;
 }
@@ -122,4 +124,21 @@ AppointmentManager::getAvailableSlots(const std::chrono::year_month_day &date,
   }
 
   return available_slots;
+}
+
+bool AppointmentManager::canScheduleOffer(
+    const std::chrono::year_month_day &date, const std::chrono::minutes &time,
+    const Offer &offer, const OfferManager &offer_manager) const {
+  auto slots = getAvailableSlots(date, offer_manager);
+  if (slots.empty()) {
+    return false;
+  }
+
+  for (const auto &slot : slots) {
+    if (slot.start_time <= time && slot.end_time >= time + offer.duration) {
+      return true;
+    }
+  }
+
+  return false;
 }
