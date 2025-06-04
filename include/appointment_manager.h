@@ -11,15 +11,13 @@ public:
   std::string client_name;
   std::string offer_name;
   std::chrono::year_month_day date;
-  std::chrono::hh_mm_ss<std::chrono::minutes> time;
+  std::chrono::minutes time;
 
   Appointment(std::string client_name, std::string offer_name,
-              std::chrono::year_month_day date,
-              std::chrono::hh_mm_ss<std::chrono::minutes> time);
+              std::chrono::year_month_day date, std::chrono::minutes time);
 
   static std::chrono::year_month_day parseDate(const std::string &date_str);
-  static std::chrono::hh_mm_ss<std::chrono::minutes>
-  parseTime(const std::string &time_str);
+  static std::chrono::minutes parseTime(const std::string &time_str);
 
   static Appointment deserialize(const std::vector<std::string> &values);
   static std::vector<std::string> serialize(const Appointment &entry);
@@ -27,11 +25,11 @@ public:
 
 class AppointmentSlot {
 public:
-  std::chrono::hh_mm_ss<std::chrono::minutes> start_time;
-  std::chrono::hh_mm_ss<std::chrono::minutes> end_time;
+  std::chrono::minutes start_time;
+  std::chrono::minutes end_time;
 
-  AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes> start_time,
-                  std::chrono::hh_mm_ss<std::chrono::minutes> end_time);
+  AppointmentSlot(std::chrono::minutes start_time,
+                  std::chrono::minutes end_time);
 };
 
 class AppointmentManager : public CsvFile<Appointment> {

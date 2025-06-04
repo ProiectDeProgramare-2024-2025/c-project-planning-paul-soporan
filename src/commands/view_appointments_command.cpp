@@ -13,8 +13,9 @@ int ViewAppointmentsCommand::execute(std::vector<std::string>) {
   for (const auto &appointment : appointments) {
     std::cout << "Client: " << appointment.client_name
               << ", Offer: " << appointment.offer_name
-              << ", Date: " << appointment.date
-              << ", Time: " << appointment.time << std::endl;
+              << ", Date: " << appointment.date << ", Time: "
+              << std::chrono::hh_mm_ss<std::chrono::minutes>(appointment.time)
+              << std::endl;
   }
 
   return 0;

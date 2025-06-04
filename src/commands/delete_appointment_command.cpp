@@ -21,8 +21,7 @@ int DeleteAppointmentCommand::execute(std::vector<std::string> args) {
   auto removed_entry = appointment_manager.removeEntry(
       [client_name, date, time](const Appointment &appointment) {
         return appointment.client_name == client_name &&
-               appointment.date == date &&
-               appointment.time.to_duration() == time.to_duration();
+               appointment.date == date && appointment.time == time;
       });
 
   if (removed_entry) {

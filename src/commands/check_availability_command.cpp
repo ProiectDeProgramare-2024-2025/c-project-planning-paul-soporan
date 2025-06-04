@@ -24,7 +24,10 @@ int CheckAvailabilityCommand::execute(std::vector<std::string> args) {
   } else {
     std::cout << "Available slots for " << date << ":" << std::endl;
     for (const auto &slot : slots) {
-      std::cout << "From " << slot.start_time << " to " << slot.end_time
+      std::cout << "From "
+                << std::chrono::hh_mm_ss<std::chrono::minutes>(slot.start_time)
+                << " to "
+                << std::chrono::hh_mm_ss<std::chrono::minutes>(slot.end_time)
                 << std::endl;
     }
   }

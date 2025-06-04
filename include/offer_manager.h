@@ -1,6 +1,7 @@
 #pragma once
 
 #include "csv.h"
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -8,7 +9,7 @@ class Offer {
 public:
   std::string name;
   int price;
-  int duration;
+  std::chrono::minutes duration;
 
   Offer(std::string name, int price, int duration);
 

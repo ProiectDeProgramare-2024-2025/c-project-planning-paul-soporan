@@ -8,7 +8,7 @@ std::vector<std::string> Offer::serialize(const Offer &entry) {
   std::vector<std::string> values;
   values.push_back(entry.name);
   values.push_back(std::to_string(entry.price));
-  values.push_back(std::to_string(entry.duration));
+  values.push_back(std::to_string(entry.duration.count()));
 
   return values;
 }

@@ -5,7 +5,7 @@
 
 Appointment::Appointment(std::string client_name, std::string offer_name,
                          std::chrono::year_month_day date,
-                         std::chrono::hh_mm_ss<std::chrono::minutes> time)
+                         std::chrono::minutes time)
     : client_name{client_name}, offer_name{offer_name}, date{date}, time{time} {
 }
 
@@ -19,24 +19,24 @@ Appointment::parseDate(const std::string &date_str) {
   return date;
 }
 
-std::chrono::hh_mm_ss<std::chrono::minutes>
-Appointment::parseTime(const std::string &time_str) {
+std::chrono::minutes Appointment::parseTime(const std::string &time_str) {
   std::istringstream is(time_str);
-  std::chrono::minutes minutes;
+  std::chrono::minutes duration;
 
-  is >> std::chrono::parse("%H:%M", minutes);
+  is >> std::chrono::parse("%H:%M", duration);
 
-  return std::chrono::hh_mm_ss<std::chrono::minutes>(minutes);
+  return duration;
 }
 
 std::vector<std::string> Appointment::serialize(const Appointment &entry) {
+  std::chrono::hh_mm_ss<std::chrono::minutes> time(entry.time);
+
   std::vector<std::string> values;
   values.push_back(entry.client_name);
   values.push_back(entry.offer_name);
   values.push_back(std::format("{:2}/{:2}/{:4}", entry.date.day(),
                                entry.date.month(), entry.date.year()));
-  values.push_back(
-      std::format("{:2}:{:2}", entry.time.hours(), entry.time.minutes()));
+  values.push_back(std::format("{:2}:{:2}", time.hours(), time.minutes()));
 
   return values;
 }
@@ -50,9 +50,8 @@ Appointment Appointment::deserialize(const std::vector<std::string> &values) {
                      parseTime(values[3]));
 }
 
-AppointmentSlot::AppointmentSlot(
-    std::chrono::hh_mm_ss<std::chrono::minutes> start_time,
-    std::chrono::hh_mm_ss<std::chrono::minutes> end_time)
+AppointmentSlot::AppointmentSlot(std::chrono::minutes start_time,
+                                 std::chrono::minutes end_time)
     : start_time{start_time}, end_time{end_time} {}
 
 AppointmentManager::AppointmentManager() : CsvFile("./data/appointments.csv") {}
@@ -61,8 +60,7 @@ std::vector<AppointmentSlot>
 AppointmentManager::getAvailableSlots(const std::chrono::year_month_day &date,
                                       const OfferManager &offer_manager) const {
 
-  std::vector<std::pair<std::chrono::duration<int, std::ratio<60>>,
-                        std::chrono::duration<int, std::ratio<60>>>>
+  std::vector<std::pair<std::chrono::minutes, std::chrono::minutes>>
       booked_slots;
 
   for (const auto &appointment : getEntries()) {
@@ -79,26 +77,22 @@ AppointmentManager::getAvailableSlots(const std::chrono::year_month_day &date,
                                  appointment.offer_name);
       }
 
-      booked_slots.emplace_back(make_pair(
-          appointment.time.hours(),
-          appointment.time.hours() + appointment.time.minutes() +
-              std::chrono::duration<int, std::ratio<60>>(offer->duration)));
+      booked_slots.emplace_back(
+          make_pair(appointment.time, appointment.time + offer->duration));
     }
   }
 
   std::sort(booked_slots.begin(), booked_slots.end(),
             [](const auto &a, const auto &b) { return a.first < b.first; });
 
-  std::chrono::duration<int, std::ratio<60>> start(9 * 60);
-  std::chrono::duration<int, std::ratio<60>> end(17 * 60);
+  std::chrono::minutes start(9 * 60);
+  std::chrono::minutes end(17 * 60);
 
   if (booked_slots.empty()) {
-    return {AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes>(start),
-                            std::chrono::hh_mm_ss<std::chrono::minutes>(end))};
+    return {AppointmentSlot(start, end)};
   }
 
-  std::vector<std::pair<std::chrono::duration<int, std::ratio<60>>,
-                        std::chrono::duration<int, std::ratio<60>>>>
+  std::vector<std::pair<std::chrono::minutes, std::chrono::minutes>>
       next_booked_slots;
 
   auto last = booked_slots.front();
@@ -118,17 +112,13 @@ AppointmentManager::getAvailableSlots(const std::chrono::year_month_day &date,
 
   for (const auto &slot : next_booked_slots) {
     if (slot.first > start) {
-      available_slots.emplace_back(AppointmentSlot(
-          std::chrono::hh_mm_ss<std::chrono::minutes>(start),
-          std::chrono::hh_mm_ss<std::chrono::minutes>(slot.first)));
+      available_slots.emplace_back(AppointmentSlot(start, slot.first));
     }
     start = slot.second;
   }
 
   if (start < end) {
-    available_slots.emplace_back(
-        AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes>(start),
-                        std::chrono::hh_mm_ss<std::chrono::minutes>(end)));
+    available_slots.emplace_back(AppointmentSlot(start, end));
   }
 
   return available_slots;
