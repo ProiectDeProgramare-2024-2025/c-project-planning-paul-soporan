@@ -1,5 +1,7 @@
-#include <appointment_manager.h>
+#include "appointment_manager.h"
+#include <algorithm>
 #include <sstream>
+#include <utility>
 
 Appointment::Appointment(std::string client_name, std::string offer_name,
                          std::chrono::year_month_day date,
@@ -48,4 +50,86 @@ Appointment Appointment::deserialize(const std::vector<std::string> &values) {
                      parseTime(values[3]));
 }
 
+AppointmentSlot::AppointmentSlot(
+    std::chrono::hh_mm_ss<std::chrono::minutes> start_time,
+    std::chrono::hh_mm_ss<std::chrono::minutes> end_time)
+    : start_time{start_time}, end_time{end_time} {}
+
 AppointmentManager::AppointmentManager() : CsvFile("./data/appointments.csv") {}
+
+std::vector<AppointmentSlot>
+AppointmentManager::getAvailableSlots(const std::chrono::year_month_day &date,
+                                      const OfferManager &offer_manager) const {
+
+  std::vector<std::pair<std::chrono::duration<int, std::ratio<60>>,
+                        std::chrono::duration<int, std::ratio<60>>>>
+      booked_slots;
+
+  for (const auto &appointment : getEntries()) {
+    if (appointment.date == date) {
+      auto offer_entries = offer_manager.getEntries();
+
+      auto offer = std::find_if(offer_entries.begin(), offer_entries.end(),
+                                [&appointment](const Offer &offer) {
+                                  return offer.name == appointment.offer_name;
+                                });
+
+      if (offer == offer_entries.end()) {
+        throw std::runtime_error("No offer found for appointment: " +
+                                 appointment.offer_name);
+      }
+
+      booked_slots.emplace_back(make_pair(
+          appointment.time.hours(),
+          appointment.time.hours() + appointment.time.minutes() +
+              std::chrono::duration<int, std::ratio<60>>(offer->duration)));
+    }
+  }
+
+  std::sort(booked_slots.begin(), booked_slots.end(),
+            [](const auto &a, const auto &b) { return a.first < b.first; });
+
+  std::chrono::duration<int, std::ratio<60>> start(9 * 60);
+  std::chrono::duration<int, std::ratio<60>> end(17 * 60);
+
+  if (booked_slots.empty()) {
+    return {AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes>(start),
+                            std::chrono::hh_mm_ss<std::chrono::minutes>(end))};
+  }
+
+  std::vector<std::pair<std::chrono::duration<int, std::ratio<60>>,
+                        std::chrono::duration<int, std::ratio<60>>>>
+      next_booked_slots;
+
+  auto last = booked_slots.front();
+  for (auto i = 1; i < booked_slots.size(); ++i) {
+    auto current = booked_slots[i];
+    if (current.first > last.second) {
+      next_booked_slots.emplace_back(last.first, current.first);
+      last = current;
+    } else {
+      last.second = std::max(last.second, current.second);
+    }
+  }
+
+  next_booked_slots.emplace_back(last.first, last.second);
+
+  std::vector<AppointmentSlot> available_slots;
+
+  for (const auto &slot : next_booked_slots) {
+    if (slot.first > start) {
+      available_slots.emplace_back(AppointmentSlot(
+          std::chrono::hh_mm_ss<std::chrono::minutes>(start),
+          std::chrono::hh_mm_ss<std::chrono::minutes>(slot.first)));
+    }
+    start = slot.second;
+  }
+
+  if (start < end) {
+    available_slots.emplace_back(
+        AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes>(start),
+                        std::chrono::hh_mm_ss<std::chrono::minutes>(end)));
+  }
+
+  return available_slots;
+}

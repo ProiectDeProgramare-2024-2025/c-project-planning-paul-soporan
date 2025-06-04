@@ -1,6 +1,7 @@
 #pragma once
 
 #include "csv.h"
+#include "offer_manager.h"
 #include <chrono>
 #include <string>
 #include <vector>
@@ -24,7 +25,20 @@ public:
   static std::vector<std::string> serialize(const Appointment &entry);
 };
 
+class AppointmentSlot {
+public:
+  std::chrono::hh_mm_ss<std::chrono::minutes> start_time;
+  std::chrono::hh_mm_ss<std::chrono::minutes> end_time;
+
+  AppointmentSlot(std::chrono::hh_mm_ss<std::chrono::minutes> start_time,
+                  std::chrono::hh_mm_ss<std::chrono::minutes> end_time);
+};
+
 class AppointmentManager : public CsvFile<Appointment> {
 public:
   AppointmentManager();
+
+  std::vector<AppointmentSlot>
+  getAvailableSlots(const std::chrono::year_month_day &date,
+                    const OfferManager &offer_manager) const;
 };

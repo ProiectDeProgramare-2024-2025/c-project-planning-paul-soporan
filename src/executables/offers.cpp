@@ -2,9 +2,6 @@
 #include "commands/delete_offer_command.h"
 #include "commands/view_offers_command.h"
 #include "executable.h"
-#include "offer_manager.h"
-#include <cstring>
-#include <iostream>
 
 int main(int argc, char *argv[]) {
   auto add_offer_command = AddOfferCommand();

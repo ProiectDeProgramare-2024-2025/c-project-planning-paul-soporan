@@ -1,5 +1,6 @@
 #include "commands/check_availability_command.h"
 #include "appointment_manager.h"
+#include "offer_manager.h"
 #include <iostream>
 
 CheckAvailabilityCommand::CheckAvailabilityCommand()
@@ -13,6 +14,20 @@ int CheckAvailabilityCommand::execute(std::vector<std::string> args) {
   }
 
   auto date = Appointment::parseDate(args[0]);
+
+  OfferManager offer_manager;
+  AppointmentManager appointment_manager;
+
+  auto slots = appointment_manager.getAvailableSlots(date, offer_manager);
+  if (slots.empty()) {
+    std::cout << "No available slots for " << date << std::endl;
+  } else {
+    std::cout << "Available slots for " << date << ":" << std::endl;
+    for (const auto &slot : slots) {
+      std::cout << "From " << slot.start_time << " to " << slot.end_time
+                << std::endl;
+    }
+  }
 
   return 0;
 }
